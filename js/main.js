@@ -59,9 +59,14 @@ async function award(key, choice, localOk) {
     return { ok: localOk, awarded: scored.awarded, duplicate: scored.duplicate };
   }
   if (state.attempt.seen.has(key)) return { duplicate: true, ok: false, awarded: 0 };
-  state.attempt.seen.add(key);
   const result = await submitAnswer(key, choice);
   if (result.error) return { ok: false, awarded: 0, duplicate: false, error: result.error };
+  state.attempt.seen.add(key);
+  state.attempt.total += 1;
+  if (result.ok) {
+    state.attempt.correct += 1;
+    state.attempt.points += 10;
+  }
   state.live.score = result.score;
   return result;
 }
