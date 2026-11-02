@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misión Planeta Verde</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="world" aria-hidden="true">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="orb orb-c"></div>
+    <div class="leaf leaf-1"></div>
+    <div class="leaf leaf-2"></div>
+    <div class="leaf leaf-3"></div>
+  </div>
+
+  <div class="app">
+    <header class="topbar glass" id="topbar" hidden>
+      <button class="icon-btn" id="btn-home" type="button" aria-label="Volver al inicio">
+        <i data-lucide="leaf"></i>
+      </button>
+      <div class="brand-mini">
+        <strong>Misión Planeta Verde</strong>
+        <span id="hud-mission">Panel</span>
+      </div>
+      <div class="hud-pills">
+        <span class="pill"><i data-lucide="star"></i> <b id="hud-score">0</b></span>
+        <span class="pill" id="hud-time-wrap"><i data-lucide="timer"></i> <b id="hud-time">—</b></span>
+        <button class="icon-btn" id="btn-sound" type="button" aria-pressed="true" aria-label="Activar o silenciar sonidos">
+          <i data-lucide="volume-2"></i>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="screen is-active" id="screen-access" data-screen="access">
+        <div class="welcome-layout">
+          <div class="glass hero-copy">
+            <p class="eyebrow">Ingreso</p>
+            <h1>Escribe tu nombre</h1>
+            <p class="sub">Con tu nombre entras a una sala. Si eres quien administra, el siguiente paso pide la contraseña.</p>
+            <form class="stack" id="name-form">
+              <label>Nombre o apodo <input id="player-name" maxlength="24" autocomplete="nickname" required></label>
+              <p id="name-error" class="feedback no"></p>
+              <button class="btn btn-primary" type="submit">Continuar</button>
+            </form>
+            <form class="stack" id="player-form" hidden>
+              <p class="tip-box">Hola, <b id="hello-name"></b>. Escribe la sala a la que vas a entrar.</p>
+              <label>Código de sala <input id="player-code" maxlength="3" inputmode="numeric" placeholder="001" required></label>
+              <p id="player-error" class="feedback no"></p>
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">Entrar a la sala</button>
+                <button class="btn btn-glass" id="btn-back-name" type="button">Cambiar nombre</button>
+              </div>
+              <div id="public-rooms" class="room-list"></div>
+            </form>
+            <form class="stack" id="admin-form" hidden>
+              <p class="tip-box">Hola, <b id="hello-admin"></b>. Esta entrada es solo para administración.</p>
+              <label>Contraseña <input id="admin-pass" type="password" required></label>
+              <p id="admin-error" class="feedback no"></p>
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">Entrar al panel</button>
+                <button class="btn btn-glass" id="btn-back-admin" type="button">Cambiar nombre</button>
+              </div>
+            </form>
+            <button class="btn btn-glass" id="btn-mode-solo" type="button">Practicar solo</button>
+          </div>
+          <div class="planet-stage" aria-hidden="true"><div class="ring"></div></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-lobby" data-screen="lobby">
+        <article class="glass lesson-card">
+          <p class="eyebrow" id="lobby-code">Sala</p>
+          <h2 id="lobby-title">Esperando</h2>
+          <p class="lead" id="lobby-count">0/0</p>
+          <p class="tip-box" id="lobby-status">¡Ya estás dentro! Espera a que el administrador inicie la misión.</p>
+          <div id="lobby-list"></div>
+        </article>
+      </section>
+
+      <section class="screen" id="screen-countdown" data-screen="countdown">
+        <div class="count-wrap">
+          <p class="count-num" id="count-num">5</p>
+          <p class="lead">La misión está por comenzar</p>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-podium" data-screen="podium">
+        <article class="glass lesson-card">
+          <p class="eyebrow">Tu sala</p>
+          <h2>Podio</h2>
+          <div class="podium" id="podium"></div>
+          <h3>Clasificación de la sala</h3>
+          <div id="room-board"></div>
+        </article>
+      </section>
+
+      <section class="screen" id="screen-admin" data-screen="admin">
+        <div class="screen-head">
+          <div>
+            <p class="eyebrow">Administrador</p>
+            <h2>Panel de salas</h2>
+          </div>
+          <button class="btn btn-glass" id="btn-admin-out" type="button">Salir</button>
+        </div>
+        <div class="mission-grid" id="admin-stats"></div>
+        <form class="glass stack admin-create" id="room-create">
+          <strong>Nueva sala</strong>
+          <label>Nombre <input id="room-title" placeholder="Grupo 5A"></label>
+          <label>Cupo <input id="room-max" type="number" min="2" max="40" value="5"></label>
+          <label>Duración en segundos <input id="room-time" type="number" min="60" value="900"></label>
+          <label>Rondas <input id="room-rounds" type="number" min="1" max="3" value="1"></label>
+          <label class="check"><input id="room-public" type="checkbox" checked> Sala pública</label>
+          <label class="check"><input id="room-auto" type="checkbox"> Inicio automático al llenarse</label>
+          <label class="check"><input id="room-late" type="checkbox"> Permitir unirse después de iniciar</label>
+          <button class="btn btn-primary" type="submit">Crear sala</button>
+        </form>
+        <div id="admin-rooms" class="admin-rooms"></div>
+        <h3>Clasificación general</h3>
+        <div id="admin-overview"></div>
+      </section>
+
+      <section class="screen" id="screen-welcome" data-screen="welcome">
+        <div class="welcome-layout">
+          <div class="glass hero-copy">
+            <p class="eyebrow"><i data-lucide="sprout"></i> Protector del planeta</p>
+            <h1>Misión<br>Planeta Verde</h1>
+            <p class="lead">¡El planeta necesita tu ayuda!</p>
+            <p class="sub">Clasifica residuos, responde retos y devuélvele el verde a la Tierra.</p>
+            <div class="actions">
+              <button class="btn btn-primary" id="btn-continue" type="button" hidden>
+                Continuar partida
+              </button>
+              <button class="btn btn-primary" id="btn-start" type="button">
+                Nueva partida <i data-lucide="arrow-right"></i>
+              </button>
+              <button class="btn btn-glass" id="btn-how" type="button">
+                ¿Cómo jugar?
+              </button>
+              <button class="btn btn-glass" id="btn-bitacora" type="button">
+                Bitácora del proyecto
+              </button>
+              <button class="btn btn-glass" id="btn-sources" type="button">
+                Fuentes
+              </button>
+            </div>
+          </div>
+          <div class="planet-stage" aria-hidden="true">
+            <div class="ring"></div>
+            <svg class="planet" viewBox="0 0 220 220">
+              <defs>
+                <radialGradient id="earth" cx="38%" cy="36%" r="70%">
+                  <stop offset="0%" stop-color="#b8f3c8"/>
+                  <stop offset="42%" stop-color="#22c55e"/>
+                  <stop offset="100%" stop-color="#14532d"/>
+                </radialGradient>
+                <linearGradient id="sea" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#7dd3fc"/>
+                  <stop offset="100%" stop-color="#0284c7"/>
+                </linearGradient>
+              </defs>
+              <circle cx="110" cy="110" r="92" fill="url(#earth)"/>
+              <path d="M48 92c18-22 40-18 54-6 10 8 22 6 34-8 14 6 28 28 24 48-6 28-30 36-52 30-20-6-28-2-40 8-16-16-28-42-20-72z" fill="url(#sea)" opacity=".85"/>
+              <path d="M126 70c16 4 28 18 30 34-12 2-22-6-30-4-8 2-16 12-28 10 2-18 12-36 28-40z" fill="#86efac" opacity=".9"/>
+              <ellipse cx="78" cy="74" rx="34" ry="18" fill="#fff" opacity=".28"/>
+            </svg>
+            <span class="float-chip chip-a glass"><i data-lucide="recycle"></i></span>
+            <span class="float-chip chip-b glass"><i data-lucide="droplets"></i></span>
+            <span class="float-chip chip-c glass"><i data-lucide="trees"></i></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-missions" data-screen="missions">
+        <div class="screen-head">
+          <div>
+            <p class="eyebrow">Tu base</p>
+            <h2>Panel de misiones</h2>
+          </div>
+          <div class="glass stat-inline">
+            <span>Completadas</span>
+            <strong id="done-count">0/3</strong>
+          </div>
+        </div>
+
+        <div class="glass progress-card">
+          <div class="progress-meta">
+            <span>Limpieza del planeta</span>
+            <b id="progress-label">0%</b>
+          </div>
+          <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+            <span id="progress-fill"></span>
+          </div>
+          <div class="badge-row" id="badge-row"></div>
+        </div>
+
+        <div class="mission-grid" id="mission-grid"></div>
+      </section>
+
+      <section class="screen" id="screen-brief" data-screen="brief">
+        <article class="glass lesson-card">
+          <p class="eyebrow">Bitácora académica</p>
+          <h2>Qué problema resolvemos</h2>
+          <p>En casa y en el colegio muchos residuos se mezclan. Así se pierde lo que sí se puede aprovechar y llega más basura al suelo, al agua y al relleno.</p>
+          <h2>Objetivo</h2>
+          <p>Aprender a separar residuos con el código de Colombia y a cuidar el agua, los ríos y los árboles, practicando dentro del juego.</p>
+          <h2>Por qué es TAC</h2>
+          <p>TAC significa Tecnología para el Aprendizaje y el Conocimiento. Este juego no usa la tecnología solo para mostrar información: la usa para practicar, recibir una explicación y construir el conocimiento paso a paso.</p>
+          <h2>Storyboard</h2>
+          <ol>
+            <li>Bienvenida: el planeta pide ayuda.</li>
+            <li>Lección corta antes de cada misión.</li>
+            <li>Clasificación en blanco, verde y negro.</li>
+            <li>Preguntas sobre reducir, reutilizar, agua y naturaleza.</li>
+            <li>Reto final con tiempo.</li>
+            <li>Resumen de lo aprendido, insignias y un llamado a actuar en casa.</li>
+          </ol>
+          <h2>Tres integrantes</h2>
+          <ul>
+            <li><strong>Integrante 1.</strong> Núcleo del juego: pantallas, puntuación, tiempo y guardado.</li>
+            <li><strong>Integrante 2.</strong> Misiones: residuos, preguntas, reto y textos educativos.</li>
+            <li><strong>Integrante 3.</strong> Experiencia visual: cristal, planeta, animaciones y accesibilidad.</li>
+          </ul>
+          <p class="sub">Escriban el nombre de cada persona junto a su bloque al presentar. El juego no pide ni guarda datos personales.</p>
+          <button class="btn btn-primary" id="btn-brief-back" type="button">Volver</button>
+        </article>
+      </section>
+
+      <section class="screen" id="screen-lesson" data-screen="lesson">
+        <article class="glass lesson-card" id="lesson-card"></article>
+      </section>
+
+      <section class="screen" id="screen-summary" data-screen="summary">
+        <article class="glass lesson-card" id="summary-card"></article>
+      </section>
+
+      <section class="screen" id="screen-sources" data-screen="sources">
+        <article class="glass lesson-card">
+          <p class="eyebrow">Créditos</p>
+          <h2>Fuentes</h2>
+          <p class="sub">Los colores y los conceptos de este juego siguen estas publicaciones. No se añadieron cifras que no aparezcan ahí.</p>
+          <ul class="source-list" id="source-list"></ul>
+          <button class="btn btn-primary" id="btn-sources-back" type="button">Volver</button>
+        </article>
+      </section>
+
+      <section class="screen" id="screen-game" data-screen="game">
+        <div class="screen-head">
+          <div>
+            <p class="eyebrow" id="game-kicker">Misión</p>
+            <h2 id="game-title">Clasifica</h2>
+          </div>
+          <div class="game-tools">
+            <p class="hint" id="game-hint">Arrastra cada residuo a su contenedor.</p>
+            <button class="btn btn-glass" id="btn-restart" type="button">Reiniciar misión</button>
+          </div>
+        </div>
+        <div id="game-stage" class="game-stage"></div>
+        <p class="feedback" id="feedback" role="status"></p>
+      </section>
+
+      <section class="screen" id="screen-results" data-screen="results">
+        <div class="results-layout">
+          <div class="glass results-hero">
+            <p class="eyebrow">Informe de misión</p>
+            <h2 id="result-title">¡Buen trabajo!</h2>
+            <p class="lead" id="result-msg">Cada acierto deja el planeta más limpio.</p>
+            <p class="tip-box" id="result-cta">Hoy, en tu casa, separa los residuos en blanco, verde y negro y explica a tu familia por qué.</p>
+            <div class="result-stats">
+              <article class="glass stat">
+                <i data-lucide="star"></i>
+                <b id="res-score">0</b>
+                <span>Puntos</span>
+              </article>
+              <article class="glass stat">
+                <i data-lucide="percent"></i>
+                <b id="res-acc">0%</b>
+                <span>Aciertos</span>
+              </article>
+              <article class="glass stat">
+                <i data-lucide="timer"></i>
+                <b id="res-time">0:00</b>
+                <span>Tiempo</span>
+              </article>
+            </div>
+            <div class="badge-row" id="result-badges"></div>
+            <div class="actions">
+              <button class="btn btn-primary" id="btn-again" type="button">Jugar de nuevo</button>
+              <button class="btn btn-glass" id="btn-panel" type="button">Volver al panel</button>
+              <button class="btn btn-glass" id="btn-sources-end" type="button">Fuentes y créditos</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="glass dialog" id="how-dialog">
+    <form method="dialog">
+      <p class="eyebrow">Guía rápida</p>
+      <h3>¿Cómo jugar?</h3>
+      <ol class="how-list">
+        <li><i data-lucide="layout-grid"></i> Elige una misión en el panel.</li>
+        <li><i data-lucide="recycle"></i> Blanco: limpios y secos. Verde: orgánicos. Negro: no aprovechables.</li>
+        <li><i data-lucide="help-circle"></i> Responde con un toque. El acierto suma puntos.</li>
+        <li><i data-lucide="timer"></i> En el reto final, el tiempo también cuenta.</li>
+      </ol>
+      <div class="bin-legend">
+        <span class="dot white"></span> Blanco
+        <span class="dot green"></span> Verde
+        <span class="dot black"></span> Negro
+      </div>
+      <button class="btn btn-primary" value="close" type="submit">Entendido</button>
+    </form>
+  </dialog>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+Las ilustraciones del planeta y las hojas están dibujadas en el HTML con SVG.
+Los sonidos se generan en el navegador. No hay archivos de audio ni fotos de terceros.
