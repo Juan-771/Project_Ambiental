@@ -481,10 +481,22 @@ h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); }
 .offline { background: #94a3b8; }
 
 @media (max-width: 900px) {
-  body { overflow: hidden; }
-  .app { height: auto; min-height: 100%; }
-  main { min-height: calc(100vh - 120px); }
-  .screen { position: relative; display: none; }
+  html, body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+  .app, main { height: auto; min-height: 100%; overflow: visible; }
+  .screen {
+    position: relative;
+    inset: auto;
+    display: none;
+    overflow: visible;
+    transform: none;
+  }
   .screen.is-active { display: block; }
   .welcome-layout, .results-layout, .mission-grid, .bins, .result-stats, .field-row {
     grid-template-columns: 1fr;
