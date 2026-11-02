@@ -428,7 +428,46 @@ h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); }
 .podium article { padding: 14px; text-align: center; }
 .podium b { display: block; font-size: 1.6rem; }
 .check { display: flex; align-items: center; gap: 8px; font-weight: 800; }
-.admin-create { padding: 16px; margin: 14px 0; }
+.admin-create {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  margin: 14px 0;
+}
+.admin-create .field {
+  display: grid;
+  gap: 6px;
+  font-weight: 800;
+}
+.admin-create input[type="text"],
+.admin-create input:not([type="checkbox"]) {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(5, 46, 22, 0.18);
+  background: #fff;
+  color: #052e16;
+  padding: 12px 14px;
+  font: inherit;
+  font-weight: 800;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.checks { display: grid; gap: 8px; }
+.admin-create .check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+.admin-create .check input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: #16a34a;
+}
 .count-wrap { min-height: 70vh; display: grid; place-items: center; text-align: center; }
 .count-num {
   margin: 0;
@@ -447,7 +486,7 @@ h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); }
   main { min-height: calc(100vh - 120px); }
   .screen { position: relative; display: none; }
   .screen.is-active { display: block; }
-  .welcome-layout, .results-layout, .mission-grid, .bins, .result-stats {
+  .welcome-layout, .results-layout, .mission-grid, .bins, .result-stats, .field-row {
     grid-template-columns: 1fr;
   }
   .planet-stage { height: 320px; }

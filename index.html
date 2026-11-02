@@ -110,15 +110,27 @@
           <button class="btn btn-glass" id="btn-admin-out" type="button">Salir</button>
         </div>
         <div class="mission-grid" id="admin-stats"></div>
-        <form class="glass stack admin-create" id="room-create">
+        <form class="glass admin-create" id="room-create">
           <strong>Nueva sala</strong>
-          <label>Nombre <input id="room-title" placeholder="Grupo 5A"></label>
-          <label>Cupo <input id="room-max" type="number" min="2" max="40" value="5"></label>
-          <label>Duración en segundos <input id="room-time" type="number" min="60" value="900"></label>
-          <label>Rondas <input id="room-rounds" type="number" min="1" max="3" value="1"></label>
-          <label class="check"><input id="room-public" type="checkbox" checked> Sala pública</label>
-          <label class="check"><input id="room-auto" type="checkbox"> Inicio automático al llenarse</label>
-          <label class="check"><input id="room-late" type="checkbox"> Permitir unirse después de iniciar</label>
+          <label class="field">Nombre
+            <input id="room-title" placeholder="Grupo 5A">
+          </label>
+          <div class="field-row">
+            <label class="field">Cupo
+              <input id="room-max" type="number" min="2" max="40" value="5">
+            </label>
+            <label class="field">Minutos
+              <input id="room-time" type="number" min="1" max="60" value="15">
+            </label>
+            <label class="field">Rondas
+              <input id="room-rounds" type="number" min="1" max="3" value="1">
+            </label>
+          </div>
+          <div class="checks">
+            <label class="check"><input id="room-public" type="checkbox" checked> Sala pública</label>
+            <label class="check"><input id="room-auto" type="checkbox"> Inicio automático al llenarse</label>
+            <label class="check"><input id="room-late" type="checkbox"> Permitir unirse después de iniciar</label>
+          </div>
           <button class="btn btn-primary" type="submit">Crear sala</button>
         </form>
         <div id="admin-rooms" class="admin-rooms"></div>

@@ -607,14 +607,22 @@ $("#btn-back-admin").addEventListener("click", backToName);
 $("#name-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const name = $("#player-name").value.trim();
-  const response = await fetch("/api/access", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
-  });
-  const body = await response.json();
-  if (!response.ok) {
-    $("#name-error").textContent = body.error || "No se pudo continuar.";
+  let response;
+  try {
+    response = await fetch("/api/access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+  } catch {
+    $("#name-error").textContent = "Esta página no tiene el servidor de salas. Usa Practicar solo o abre el juego donde corre npm start.";
+    return;
+  }
+  const raw = await response.text();
+  let body = {};
+  try { body = JSON.parse(raw); } catch { body = {}; }
+  if (!response.ok || !body.role) {
+    $("#name-error").textContent = body.error || "Esta página no tiene el servidor de salas. El administrador y las salas solo funcionan con npm start, no en un sitio estático.";
     return;
   }
   $("#name-error").textContent = "";
@@ -736,7 +744,7 @@ $("#room-create").addEventListener("submit", async (event) => {
     body: JSON.stringify({
       title: $("#room-title").value,
       maxPlayers: Number($("#room-max").value),
-      durationSec: Number($("#room-time").value),
+      durationSec: Number($("#room-time").value) * 60,
       rounds: Number($("#room-rounds").value),
       isPublic: $("#room-public").checked,
       autoStart: $("#room-auto").checked,
