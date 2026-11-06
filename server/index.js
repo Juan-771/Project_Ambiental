@@ -15,6 +15,8 @@ import {
   finishMatch,
   history,
   joinRoom,
+  loginPlayer,
+  registerPlayer,
   listPublic,
   openDb,
   overview,
@@ -80,6 +82,18 @@ function requireAdmin(req, res, next) {
   if (!readCookie(req)) return res.status(401).json({ error: "No autorizado." });
   next();
 }
+
+app.post("/api/players/register", (req, res) => {
+  const result = registerPlayer(db, { nickname: req.body?.name });
+  if (result.error) return res.status(409).json(result);
+  res.json(result);
+});
+
+app.post("/api/players/login", (req, res) => {
+  const result = loginPlayer(db, { nickname: req.body?.name });
+  if (result.error) return res.status(404).json(result);
+  res.json(result);
+});
 
 app.post("/api/access", (req, res) => {
   const name = String(req.body?.name || "").trim().toLowerCase();

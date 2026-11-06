@@ -21,7 +21,7 @@
 
   <div class="app">
     <header class="topbar glass" id="topbar" hidden>
-      <button class="icon-btn" id="btn-home" type="button" aria-label="Volver al inicio">
+        <button class="icon-btn" id="btn-home" type="button" aria-label="Volver al ingreso">
         <i data-lucide="leaf"></i>
       </button>
       <div class="brand-mini">
@@ -47,7 +47,10 @@
             <form class="stack" id="name-form">
               <label>Nombre o apodo <input id="player-name" maxlength="24" autocomplete="nickname" required></label>
               <p id="name-error" class="feedback no"></p>
-              <button class="btn btn-primary" type="submit">Continuar</button>
+              <div class="actions">
+                <button class="btn btn-primary" id="btn-register" type="button">Registrarme</button>
+                <button class="btn btn-glass" id="btn-login" type="button">Ingresar</button>
+              </div>
             </form>
             <form class="stack" id="player-form" hidden>
               <p class="tip-box">Hola, <b id="hello-name"></b>. Escribe la sala a la que vas a entrar.</p>

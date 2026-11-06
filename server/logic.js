@@ -99,6 +99,8 @@ export function openDb(file) {
     );
   `);
   try { db.exec("ALTER TABLE rooms ADD COLUMN starts_at TEXT"); } catch { /* la columna ya existe */ }
+  try { db.exec("ALTER TABLE players ADD COLUMN nickname_key TEXT"); } catch { /* la columna ya existe */ }
+  db.exec("UPDATE players SET nickname_key = lower(trim(nickname)) WHERE nickname_key IS NULL OR nickname_key = ''");
   db.exec(`
     CREATE TABLE IF NOT EXISTS match_history (
       id INTEGER PRIMARY KEY,
@@ -212,8 +214,46 @@ export function listPublic(db) {
     }));
 }
 
+function cleanName(nickname) {
+  return String(nickname || "").trim().slice(0, 24);
+}
+
+function nameKey(nickname) {
+  return cleanName(nickname).toLowerCase();
+}
+
+export function registerPlayer(db, { nickname }) {
+  const name = cleanName(nickname);
+  const key = nameKey(name);
+  if (key.length < 2) return { error: "Escribe un nombre de al menos 2 letras." };
+  if (key === (process.env.ADMIN_NAME || "administrador").trim().toLowerCase()) {
+    return { error: "Ese nombre está reservado para la administración." };
+  }
+  const exists = db.prepare("SELECT id FROM players WHERE nickname_key = ?").get(key);
+  if (exists) return { error: "Ese usuario ya existe. Ingresa con él para recuperar tu progreso." };
+  const issued = newToken();
+  const id = newToken();
+  db.prepare("INSERT INTO players (id, token_hash, nickname, nickname_key, created_at) VALUES (?, ?, ?, ?, ?)").run(
+    id, hashToken(issued), name, key, now()
+  );
+  return { token: issued, playerId: id, nickname: name, room: null };
+}
+
+export function loginPlayer(db, { nickname }) {
+  const key = nameKey(nickname);
+  if (key.length < 2) return { error: "Escribe un nombre de al menos 2 letras." };
+  const player = db.prepare("SELECT * FROM players WHERE nickname_key = ? ORDER BY created_at ASC").get(key);
+  if (!player) return { error: "Ese usuario no existe. Regístrate primero." };
+  const issued = newToken();
+  db.prepare("UPDATE players SET token_hash = ? WHERE id = ?").run(hashToken(issued), player.id);
+  const last = db.prepare(`SELECT r.code FROM participants p JOIN rooms r ON r.id = p.room_id
+    WHERE p.player_id = ? ORDER BY p.joined_at DESC LIMIT 1`).get(player.id);
+  const room = last ? publicRoom(db, last.code) : null;
+  return { token: issued, playerId: player.id, nickname: player.nickname, room };
+}
+
 export function joinRoom(db, { nickname, code, token }) {
-  let name = String(nickname || "").trim().slice(0, 24);
+  let name = cleanName(nickname);
   const codeKey = normalizeCode(code);
   if (!codeKey) return { error: "Escribe el código de la sala." };
   const room = db.prepare("SELECT * FROM rooms WHERE code = ?").get(codeKey);
@@ -233,13 +273,14 @@ export function joinRoom(db, { nickname, code, token }) {
   if (!player && name.length < 2) return { error: "Escribe un nombre de al menos 2 letras." };
   if (player && name.length < 2) name = player.nickname;
   if (!player) {
+    const taken = db.prepare("SELECT id FROM players WHERE nickname_key = ?").get(nameKey(name));
+    if (taken) return { error: "Ese usuario ya existe. Ingresa con él para recuperar tu progreso." };
     issued = newToken();
     const id = newToken();
-    db.prepare("INSERT INTO players (id, token_hash, nickname, created_at) VALUES (?, ?, ?, ?)").run(id, hashToken(issued), name, now());
+    db.prepare("INSERT INTO players (id, token_hash, nickname, nickname_key, created_at) VALUES (?, ?, ?, ?, ?)").run(
+      id, hashToken(issued), name, nameKey(name), now()
+    );
     player = db.prepare("SELECT * FROM players WHERE id = ?").get(id);
-  } else if (player.nickname !== name) {
-    db.prepare("UPDATE players SET nickname = ? WHERE id = ?").run(name, player.id);
-    player.nickname = name;
   }
 
   const count = db.prepare("SELECT COUNT(*) AS n FROM participants WHERE room_id = ?").get(room.id).n;

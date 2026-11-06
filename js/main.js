@@ -26,7 +26,7 @@ const screens = [...document.querySelectorAll(".screen")];
 function show(name) {
   state.screen = name;
   screens.forEach((s) => s.classList.toggle("is-active", s.dataset.screen === name));
-  $("#topbar").hidden = name === "welcome" || name === "access";
+  $("#topbar").hidden = name === "access";
   if (name === "welcome") paintContinue();
   const labels = { access: "Ingreso", lobby: "Sala", countdown: "Cuenta regresiva", podium: "Podio", admin: "Admin", missions: "Panel", brief: "Bitácora", lesson: "Aprende", game: "Juego", summary: "Resumen", sources: "Fuentes", results: "Resultados" };
   $("#hud-mission").textContent = labels[name] || "";
@@ -510,11 +510,19 @@ $("#btn-sound").addEventListener("click", () => {
   toggleSound();
   paintSound();
 });
-$("#btn-home").addEventListener("click", () => {
+function leaveToLogin() {
   clearClocks();
+  clearInterval(state.countTimer);
   state.attempt = null;
-  show("welcome");
-});
+  state.live = null;
+  state.current = null;
+  sessionStorage.removeItem("mpv-token");
+  sessionStorage.removeItem("mpv-room");
+  sessionStorage.removeItem("mpv-name");
+  backToName();
+  show("access");
+}
+$("#btn-home").addEventListener("click", leaveToLogin);
 $("#btn-restart").addEventListener("click", () => {
   if (!state.current) return;
   finishToken += 1;
@@ -609,43 +617,82 @@ function backToName() {
 }
 $("#btn-back-name").addEventListener("click", backToName);
 $("#btn-back-admin").addEventListener("click", backToName);
-$("#name-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function identifyName(name) {
+  const response = await fetch("/api/access", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  const raw = await response.text();
+  try { return JSON.parse(raw); } catch { return {}; }
+}
+
+function openPlayerArea(name) {
+  localStorage.setItem("mpv-user", name.trim().toLowerCase());
+  $("#hello-name").textContent = name;
+  $("#name-form").hidden = true;
+  $("#player-form").hidden = false;
+  $("#admin-form").hidden = true;
+  if (liveReady()) loadPublic();
+  else $("#player-error").textContent = "Inicia el servidor con npm start para usar las salas.";
+}
+
+async function accountAction(path) {
   const name = $("#player-name").value.trim();
+  if (name.length < 2) {
+    $("#name-error").textContent = "Escribe un nombre de al menos 2 letras.";
+    return;
+  }
+  let access = {};
+  try {
+    access = await identifyName(name);
+  } catch {
+    $("#name-error").textContent = "Esta página no tiene el servidor de usuarios.";
+    return;
+  }
+  if (access.role === "admin") {
+    $("#name-error").textContent = "";
+    $("#hello-admin").textContent = name;
+    document.querySelector("#screen-access h1").textContent = "Contraseña";
+    $("#name-form").hidden = true;
+    $("#admin-form").hidden = false;
+    return;
+  }
   let response;
   try {
-    response = await fetch("/api/access", {
+    response = await fetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
   } catch {
-    $("#name-error").textContent = "Esta página no tiene el servidor de salas. Usa Practicar solo o abre el juego donde corre npm start.";
+    $("#name-error").textContent = "No se pudo conectar con el servidor.";
     return;
   }
   const raw = await response.text();
   let body = {};
   try { body = JSON.parse(raw); } catch { body = {}; }
-  if (!response.ok || !body.role) {
-    $("#name-error").textContent = body.error || "Esta página no tiene el servidor de salas. El administrador y las salas solo funcionan con npm start, no en un sitio estático.";
+  if (!response.ok) {
+    $("#name-error").textContent = body.error || "No se pudo continuar.";
     return;
   }
   $("#name-error").textContent = "";
-  $("#name-form").hidden = true;
-  if (body.role === "admin") {
-    $("#hello-admin").textContent = name;
-    document.querySelector("#screen-access h1").textContent = "Contraseña";
-    $("#admin-form").hidden = false;
-    $("#player-form").hidden = true;
+  sessionStorage.setItem("mpv-token", body.token);
+  sessionStorage.setItem("mpv-name", body.nickname || name);
+  openPlayerArea(body.nickname || name);
+  if (body.room && body.room.status !== "closed" && body.room.status !== "finished") {
+    sessionStorage.setItem("mpv-room", body.room.code);
+    state.live = { token: body.token, playerId: body.playerId, score: 0, room: body.room, entered: false };
+    renderLobby(body.room);
+  }
+}
+$("#btn-register").addEventListener("click", () => accountAction("/api/players/register"));
+$("#btn-login").addEventListener("click", () => accountAction("/api/players/login"));
+$("#btn-mode-solo").addEventListener("click", () => {
+  if (!localStorage.getItem("mpv-user")) {
+    $("#name-error").textContent = "Regístrate o ingresa antes de practicar. Así tu progreso queda guardado.";
     return;
   }
-  $("#hello-name").textContent = name;
-  $("#player-form").hidden = false;
-  $("#admin-form").hidden = true;
-  if (liveReady()) loadPublic();
-  else $("#player-error").textContent = "Inicia el servidor con npm start para usar las salas.";
-});
-$("#btn-mode-solo").addEventListener("click", () => {
   state.live = null;
   show("welcome");
 });
@@ -672,9 +719,6 @@ $("#player-form").addEventListener("submit", async (event) => {
 onRoom((room) => {
   if (!state.live || room.code !== state.live.room.code) return;
   renderLobby(room);
-  if (room.status === "playing" && state.screen === "lobby") {
-    $("#btn-lobby-play").disabled = false;
-  }
 });
 
 $("#admin-form").addEventListener("submit", async (event) => {
